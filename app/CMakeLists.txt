@@ -10,6 +10,9 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
+#添加子目录的CMakeList.txt文件
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libyuv-android)
+
 add_library( # Sets the name of the library.
              native-lib
 
@@ -39,6 +42,7 @@ find_library( # Sets the name of the path variable.
 target_link_libraries( # Specifies the target library.
                        native-lib
 
+                       yuv
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
