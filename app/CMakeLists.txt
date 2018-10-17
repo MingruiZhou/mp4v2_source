@@ -10,8 +10,14 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-#添加子目录的CMakeList.txt文件
+#CMAKE_CURRENT_SOURCE_DIR = C:/Users/ouyangjie/AndroidStudioProjects/mp4v2_source/app
+message("-------------- ${CMAKE_CURRENT_SOURCE_DIR} ---------------")
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libyuv-android)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android/include)
 
 add_library( # Sets the name of the library.
              native-lib
@@ -43,6 +49,7 @@ target_link_libraries( # Specifies the target library.
                        native-lib
 
                        yuv
+                       mp4v2
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )

@@ -469,7 +469,7 @@ Utility::process_impl()
     formatGroups();
 
     // populate code lookup set
-    set<int> codes;
+    set<long long int> codes;
     const Group::List::const_iterator ie = _group.options.end();
     for( Group::List::const_iterator it = _group.options.begin(); it != ie; it++ ) {
         const Option& option = **it;
@@ -480,7 +480,7 @@ Utility::process_impl()
     }
 
     for( ;; ) {
-        const int code = prog::getOption( _argc, _argv, _shortOptions.c_str(), _longOptions, NULL );
+        const long long int code = prog::getOption( _argc, _argv, _shortOptions.c_str(), _longOptions, NULL );
         if( code == -1 )
             break;
 

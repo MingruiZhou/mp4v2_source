@@ -1,4 +1,5 @@
 #include "libplatform/impl.h"
+#include "../../../MG_log.h"
 
 namespace mp4v2 { namespace platform { namespace io {
 
@@ -52,16 +53,20 @@ File::setName( const std::string& name_ )
 bool
 File::open( std::string name_, Mode mode_ )
 {
-    if( _isOpen )
+    if( _isOpen ){
+        LOGW("已经打开过文件了，文件名：%s", name_.c_str());
         return true;
+    }
 
     if( !name_.empty() )
         setName( name_ );
     if( mode_ != MODE_UNDEFINED )
         setMode( mode_ );
 
-    if( _provider.open( _name, _mode ))
+    if( _provider.open( _name, _mode )){
+        LOGE("_provider.open 失败，文件名：%s", name_.c_str());
         return true;
+    }
 
     FileSystem::getFileSize( _name, _size );
 

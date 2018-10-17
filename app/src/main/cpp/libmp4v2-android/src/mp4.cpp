@@ -37,6 +37,7 @@
  */
 
 #include "src/impl.h"
+#include "../../MG_log.h"
 
 using namespace mp4v2::impl;
 
@@ -94,7 +95,10 @@ MP4FileHandle MP4Read( const char* fileName )
 
     MP4File *pFile = ConstructMP4File();
     if (!pFile)
+    {
+        LOGE("创建 MP4 File 对象失败");
         return MP4_INVALID_FILE_HANDLE;
+    }
 
     try
     {
@@ -103,6 +107,7 @@ MP4FileHandle MP4Read( const char* fileName )
         return (MP4FileHandle)pFile;
     }
     catch( Exception* x ) {
+        LOGE("Read MP4 File 失败, ERRO:%s", (x->msg()).c_str());
         mp4v2::impl::log.errorf(*x);
         delete x;
     }
@@ -870,7 +875,7 @@ MP4FileHandle MP4ReadProvider( const char* fileName, const MP4FileProvider* file
         }
 
         catch (...) {
-            return MP4_INVALID_TRACK_ID;
+            return (mp4v2_ismacrypParams*)(MP4_INVALID_TRACK_ID);
         }
     }
 

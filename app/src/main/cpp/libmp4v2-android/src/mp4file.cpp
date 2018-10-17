@@ -29,6 +29,7 @@
  */
 
 #include "src/impl.h"
+#include "../../MG_log.h"
 
 namespace mp4v2 { namespace impl {
 
@@ -93,8 +94,11 @@ MP4File::GetFilename() const
 void MP4File::Read( const char* name, const MP4FileProvider* provider )
 {
     Open( name, File::MODE_READ, provider );
+    LOGI("------------------");
     ReadFromFile();
+    LOGI("------------------");
     CacheProperties();
+    LOGI("------------------");
 }
 
 void MP4File::Create( const char* fileName,
@@ -393,6 +397,7 @@ void MP4File::Open( const char* name, File::Mode mode, const MP4FileProvider* pr
 
     m_file = new File( name, mode, provider ? new io::CustomFileProvider( *provider ) : NULL );
     if( m_file->open() ) {
+        LOGE("open file faild");
         ostringstream msg;
         msg << "open(" << name << ") failed";
         throw new Exception( msg.str(), __FILE__, __LINE__, __FUNCTION__);
@@ -409,6 +414,8 @@ void MP4File::Open( const char* name, File::Mode mode, const MP4FileProvider* pr
             m_fileOriginalSize = 0;
             break;
     }
+
+    LOGI("open file successed!");
 }
 
 void MP4File::ReadFromFile()
