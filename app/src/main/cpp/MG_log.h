@@ -9,6 +9,7 @@ extern "C" {
 #ifdef OS_ANDROID
 #include <android/log.h>
 #include <stdint.h>
+#include <cstring>
 #ifndef LOG_TAG
 #define LOG_TAG (NULL == strrchr(__FILE__, '\\') ? __FILE__ : (char *)(strrchr(__FILE__, '\\') + 1))
 #endif

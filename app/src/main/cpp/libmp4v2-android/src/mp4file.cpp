@@ -94,11 +94,8 @@ MP4File::GetFilename() const
 void MP4File::Read( const char* name, const MP4FileProvider* provider )
 {
     Open( name, File::MODE_READ, provider );
-    LOGI("------------------");
     ReadFromFile();
-    LOGI("------------------");
     CacheProperties();
-    LOGI("------------------");
 }
 
 void MP4File::Create( const char* fileName,

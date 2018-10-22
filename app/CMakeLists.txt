@@ -17,7 +17,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libyuv-android)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android
-                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android/include)
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/MP4Parse)
 
 add_library( # Sets the name of the library.
              native-lib
@@ -26,7 +27,8 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             src/main/cpp/native-lib.cpp )
+             src/main/cpp/native-lib.cpp
+             src/main/cpp/MP4Parse/MP4Parse.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
