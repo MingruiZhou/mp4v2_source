@@ -11,6 +11,7 @@ extern "C" {
 #include <stdint.h>
 #include <cstring>
 #ifndef LOG_TAG
+//为什么'/'适用于.h文件， '\\'适用于.cpp文件呢
 #define LOG_TAG (NULL == strrchr(__FILE__, '\\') ? __FILE__ : (char *)(strrchr(__FILE__, '\\') + 1))
 #endif
 #define MG_LOG_UNKNOWN (0)   //    ANDROID_LOG_UNKNOWN = 0,
@@ -26,27 +27,52 @@ extern "C" {
 #define JLZ_DBG_ENABLE -1
 #define LOGD(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_DEBUG) \
                         { \
-                            __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "[%s:%d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);\
+                            std::string TAG = "(";\
+                            TAG += LOG_TAG;\
+                            TAG += ":";\
+                            TAG += std::to_string(__LINE__);\
+                            TAG += ")";\
+                            __android_log_print(ANDROID_LOG_DEBUG, TAG.c_str(), "[%s]" fmt, __FUNCTION__, ##__VA_ARGS__);\
                         }
 
 #define LOGI(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_INFO) \
                         { \
-                            __android_log_print(ANDROID_LOG_INFO, LOG_TAG, "[%s:%d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);\
+                            std::string TAG = "(";\
+                            TAG += LOG_TAG;\
+                            TAG += ":";\
+                            TAG += std::to_string(__LINE__);\
+                            TAG += ")";\
+                             __android_log_print(ANDROID_LOG_INFO, TAG.c_str(), "[%s]" fmt, __FUNCTION__, ##__VA_ARGS__);\
                         }
 
 #define LOGW(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_WARN) \
                         { \
-                            __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "[%s:%d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);\
+                            std::string TAG = "(";\
+                            TAG += LOG_TAG;\
+                            TAG += ":";\
+                            TAG += std::to_string(__LINE__);\
+                            TAG += ")";\
+                            __android_log_print(ANDROID_LOG_WARN, TAG.c_str(), "[%s]" fmt, __FUNCTION__, ##__VA_ARGS__);\
                         }
 
 #define LOGE(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_ERROR) \
                         { \
-                            __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "[%s:%d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);\
+                            std::string TAG = "(";\
+                            TAG += LOG_TAG;\
+                            TAG += ":";\
+                            TAG += std::to_string(__LINE__);\
+                            TAG += ")";\
+                            __android_log_print(ANDROID_LOG_ERROR, TAG.c_str(), "[%s]" fmt, __FUNCTION__, ##__VA_ARGS__);\
                         }
 
 #define LOGV(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_VERBOSE) \
                         { \
-                            __android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "[%s:%d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__);\
+                            std::string TAG = "(";\
+                            TAG += LOG_TAG;\
+                            TAG += ":";\
+                            TAG += std::to_string(__LINE__);\
+                            TAG += ")";\
+                            __android_log_print(ANDROID_LOG_FATAL, TAG.c_str(), "[%s]" fmt, __FUNCTION__, ##__VA_ARGS__);\
                         }
 
 #define LOGMP4V2(fmt, ...)  if (JLZ_DBG_ENABLE <=  MG_LOG_VERBOSE) \

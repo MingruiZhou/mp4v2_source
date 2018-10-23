@@ -46,6 +46,7 @@ jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
             break;
         }
 
+        env->DeleteLocalRef(jclas);
         return env->GetLongField(thiz, fieldId);
     }while(0);
 
@@ -53,6 +54,42 @@ jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
         env->DeleteLocalRef(jclas);
     }
     return 0;
+}
+
+void destroy_parse_obj_from_java(JNIEnv *env, jobject thiz){
+    jclass jclas = env->GetObjectClass(thiz);
+    do {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            LOGE("call GetObjectClass failed, ExceptionCheck return true!");
+            break;
+        }
+
+        if (nullptr == jclas) {
+            LOGE("call GetObjectClass failed, retval is NULL");
+            break;
+        }
+
+        jfieldID fieldId = env->GetFieldID(jclas, "mNativeMP4Parse", "J");
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            LOGE("call GetFieldID failed, ExceptionCheck return true!");
+            break;
+        }
+
+        if (nullptr == fieldId) {
+            LOGE("call GetFieldID failed, retval is NULL");
+            break;
+        }
+
+        env->SetLongField(thiz, fieldId, 0);
+    }while(0);
+
+    if (jclas == nullptr){
+        env->DeleteLocalRef(jclas);
+    }
 }
 
 unsigned char sps[64],pps[64];
@@ -264,7 +301,7 @@ public:
 
             if (m_JVM->GetEnv((void**) &m_pThreadEnv, m_JNI_VERSION) != JNI_OK)
             {
-                LOGE("get JNI env failed! m_JNI_VERSION = %d", m_JNI_VERSION);
+//                LOGE("get JNI env failed! m_JNI_VERSION = %d", m_JNI_VERSION);
                 if (m_JVM->AttachCurrentThread(&m_pThreadEnv, NULL) != JNI_OK){
                     LOGE("AttachCurrentThread failed!");
                     return ;
@@ -297,6 +334,7 @@ public:
         m_pThreadEnv->SetByteArrayRegion(frameData, 0, numBytes, (jbyte*)pBytes);
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_readMethodID,
             type, frameData, startTime, duration, renderingOffset, isSyncSample);
+        m_pThreadEnv->DeleteLocalRef(frameData);
     };
 
     //在与JAVA的交互中必须且只能在调用read的线程中使用
@@ -375,13 +413,15 @@ Java_google_mp4v2_1github_MP4Parse__1destroy(
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     if (pMP4Parse){
+        pMP4Parse->stop();
         TestParse* testParse = dynamic_cast<TestParse*>(pMP4Parse->getDataReader());
         if (testParse){
             delete(testParse);
         }
         delete(pMP4Parse);
+        destroy_parse_obj_from_java(env, thiz);
     } else {
-        LOGE("NOT DELETE MP4Parse OBJECT");
+        LOGE("NO DELETE MP4Parse OBJECT");
     }
 }
 
@@ -465,7 +505,7 @@ Java_google_mp4v2_1github_MP4Parse_getMP4Info(
         return pMP4Parse->getMP4Info(&info);
     }
 
-    return NULL;
+    return NATIVE_ENV_ERROR;
 }
 
 extern "C" JNIEXPORT jint
@@ -476,10 +516,11 @@ Java_google_mp4v2_1github_MP4Parse_start(
         jlong startTime, jlong duration) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     if (pMP4Parse){
+        LOGI("startTime:%u, duration:%u", startTime, duration);
         return pMP4Parse->start(startTime, duration);
     }
 
-    return NULL;
+    return NATIVE_ENV_ERROR;
 }
 
 extern "C" JNIEXPORT void

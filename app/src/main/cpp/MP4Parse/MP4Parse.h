@@ -121,7 +121,7 @@ public:
      * startTime：开始时间， 单位毫秒
      * duration ：持续时长，为0时表示读到文件未， 单位毫秒
      */
-    MP4PARSE_RETCODE start(MP4Timestamp startTime = 0, MP4Timestamp duration = 0);
+    MP4PARSE_RETCODE start(uint64_t startTime = 0, uint64_t duration = 0);
 
     void stop();
 
@@ -137,8 +137,8 @@ private:
     HeaderData    m_SPS; //不可以使用string类型存储
     HeaderData    m_PPS;
     HeaderData    m_AES;
-    MP4Timestamp  m_startTime = 0;
-    MP4Timestamp  m_duration  = 0;
+    uint64_t      m_startTime = 0; //读取流的开始时间，不是非常准确，第一帧数据的时间戳可能比设置的小，因为需要I帧
+    uint64_t      m_duration  = 0; //读取流的持续时间， 为0则表示读到文件未
     bool          m_bReading = false;
 
     std::thread*  m_pReadFrameThread = nullptr;

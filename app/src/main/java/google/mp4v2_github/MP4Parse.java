@@ -38,6 +38,12 @@ public class MP4Parse {
         return ret;
     }
 
+    public void closeMP4File(){
+        if (mNativeMP4Parse != 0){
+            _destroy();
+        }
+    }
+
     /**
      * 该接口功能仅仅是创建了对应的C++层解析对象，并将对象地址返回
      * @return >0：成功创建了对象； <= 0：错误码
@@ -61,16 +67,16 @@ public class MP4Parse {
 
     private native void _destroy();
     protected void finalize(){
-        _destroy();
+        closeMP4File();
     }
 
 
     public void onJNINotifyStopRead(){
-        MGLog.w("停止读取数据");
+        MGLog.w("文件名：" + mFileName + ", 停止读取数据");
     }
 
     public void onJNIReadFrame(int type, byte[] frame, long startTime, long duration, long renderingOffset, boolean isSyncSample){
-        MGLog.i("streamType:" + type + ", startTime:" + startTime + ", duration:" + duration +
+        MGLog.i("文件名：" + mFileName + ", frameLength:" + frame.length + ",streamType:" + type + ", startTime:" + startTime + ", duration:" + duration +
                 ", renderingOffset:" + renderingOffset + ", isSyncSample:" + isSyncSample);
         //TODO：存文件
     }

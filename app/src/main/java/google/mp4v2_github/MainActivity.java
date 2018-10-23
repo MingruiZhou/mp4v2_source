@@ -2,10 +2,12 @@ package google.mp4v2_github;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -15,10 +17,16 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native-lib");
     }
 
+    private LayoutElements [] mLe = new LayoutElements[]{new LayoutElements(), new LayoutElements(), new LayoutElements(), new LayoutElements()};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mLe[0].setInfo((TextView) findViewById(R.id.file1), (Button) findViewById(R.id.open1), (Button) findViewById(R.id.read1));
+        mLe[1].setInfo((TextView) findViewById(R.id.file2), (Button) findViewById(R.id.open2), (Button) findViewById(R.id.read2));
+        mLe[2].setInfo((TextView) findViewById(R.id.file3), (Button) findViewById(R.id.open3), (Button) findViewById(R.id.read3));
+        mLe[3].setInfo((TextView) findViewById(R.id.file4), (Button) findViewById(R.id.open4), (Button) findViewById(R.id.read4));
 
         verifyStoragePermissions(this);
     }
@@ -28,6 +36,25 @@ public class MainActivity extends AppCompatActivity {
      * which is packaged with this application.
      */
     public native String stringFromJNI();
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+        MGLog.w("onStart");
+    }
+    //屏幕方向发生改变的回调方法
+    //Manifest中设置了android:configChanges="orientation|keyboardHidden|screenSize" 后在横竖屏切换时就不会销毁重建activity
+    //目前Manifest中设置了android:screenOrientation="portrait"  ， 固定为竖屏，所以也不会走到这里来
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            MGLog.w("当前屏幕为横屏");
+        } else {
+            MGLog.w("当前屏幕为竖屏");
+        }
+        super.onConfigurationChanged(newConfig);
+        //  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);  //设置横屏
+    }
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -47,40 +74,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    MP4Parse m_MP4Parse;
-    public void parseFile(View v){
-        // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.fileName);
-        String fileName = tv.getText().toString();
-
-        if (m_MP4Parse == null || !m_MP4Parse.getmFileName().equals(fileName)){
-            m_MP4Parse = null;
-            m_MP4Parse = new MP4Parse(fileName);
-        }
-
-        int ret = m_MP4Parse.openMP4File();
-        MGLog.d("打开文件：" + fileName + ", ret：" + ret);
+    public void onClickOpen1(View v){
+        mLe[0].open();
     }
-
-    private boolean mIsReadingFrame = false;
-    public void getMP4Info(View v) {
-
-        if (m_MP4Parse != null){
-            if (mIsReadingFrame){
-                MGLog.i("开始停止读取。。。。。。。");
-                m_MP4Parse.stop();
-                mIsReadingFrame = false;
-                MGLog.i("停止读取结束。。。。。。。。。");
-                return;
-            }
-            byte[] sps = m_MP4Parse.getSPS();
-            byte[] pps = m_MP4Parse.getPPS();
-            byte[] aes = m_MP4Parse.getAES();
-            MGLog.i("sps:" + sps + ", spsLen:" + (sps != null ? sps.length : 0 ) + ", pps:" + pps + ", ppsLen:" + (pps != null ? pps.length : 0 )+
-                    ", aes:" + aes + ", aesLen:" + (aes != null ? aes.length : 0 ));
-            m_MP4Parse.getMP4Info();
-            m_MP4Parse.start(2000, 5000);
-            mIsReadingFrame = true;
-        }
+    public void onClickRead1(View v){
+        mLe[0].read();
+    }
+    public void onClickOpen2(View v){
+        mLe[1].open();
+    }
+    public void onClickRead2(View v){
+        mLe[1].read();
+    }
+    public void onClickOpen3(View v){
+        mLe[2].open();
+    }
+    public void onClickRead3(View v){
+        mLe[2].read();
+    }
+    public void onClickOpen4(View v){
+        mLe[3].open();
+    }
+    public void onClickRead4(View v){
+        mLe[3].read();
     }
 }

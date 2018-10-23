@@ -12,7 +12,7 @@ public class MGLog {
 
     private static int mLeavel = -1;
 
-    private static String filter = "MapGoo ";
+    private static String filter = "";
     public static void setLeavel(int leavel){
         mLeavel = leavel;
     }
