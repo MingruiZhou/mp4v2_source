@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="35dp"
             android:layout_weight="50"
-            android:text="test01.mp4" />
+            android:text="mapgoo.mp4" />
 
         <Button
             android:id="@+id/open1"
@@ -150,31 +150,17 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <TableLayout
-        android:id="@+id/tableLayout"
+    <SurfaceView
+        android:id="@+id/surfaceView1"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout4">
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </TableLayout>
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout4" />
 
 </android.support.constraint.ConstraintLayout>

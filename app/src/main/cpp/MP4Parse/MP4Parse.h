@@ -97,6 +97,7 @@ private:
     MP4PARSE_RETCODE parseVideoHeader();
     MP4PARSE_RETCODE parseAudioHeader();
     void readDataThread();
+    MP4SampleId calculateFirstSampleId(MP4TrackId trackId, uint32_t timeScale);
 
 public:
     MP4Parse(IDataReader* pDataReader){m_pIDataReader = pDataReader;};

@@ -117,6 +117,7 @@ MP4PARSE_RETCODE MP4Parse::parseVideoHeader()
             if (m_SPS.size() <= 0 && nSize > 0)// 只存储第一个SPS信息...
             {
                 m_SPS.assign(pSPS, nSize);
+//                LOGD("SPS:%d %d %d %d %d %d %d %d %d %d %d , size:%u", pSPS[0], pSPS[1], pSPS[2], pSPS[3], pSPS[4], pSPS[5], pSPS[6], pSPS[7], pSPS[8], pSPS[9], pSPS[10], nSize);
             }
             MP4Free(spsHeader[ix]);
             LOGI("=== 找到第 %d 个SPS格式头，长度：%u ===", ix+1, nSize);
@@ -132,6 +133,7 @@ MP4PARSE_RETCODE MP4Parse::parseVideoHeader()
             if (m_PPS.size() <= 0 && nSize > 0)// 只存储第一个PPS信息...
             {
                 m_PPS.assign(pPPS, nSize);
+//                LOGD("PPS:%d %d %d %d , size:%u", pPPS[0], pPPS[1], pPPS[2], pPPS[3], nSize);
             }
             free(ppsHeader[ix]);
             LOGI("=== 找到第 %d 个PPS格式头，长度：%u ===", ix+1, nSize);
@@ -254,6 +256,18 @@ MP4PARSE_RETCODE MP4Parse::getMP4Info(stMP4Info* info)
     return SUCCESSED;
 }
 
+//计算需要的第一帧的MP4SampleId
+//视频帧需要从I帧开始读取
+MP4SampleId MP4Parse::calculateFirstSampleId(MP4TrackId trackId, uint32_t timeScale)
+{
+    MP4SampleId sampleId = MP4GetSampleIdFromTime(m_pMP4FileHandle, trackId, timeScale, false);
+    for (; sampleId > 1; --sampleId)
+    {
+        if (MP4GetSampleSync(m_pMP4FileHandle, trackId, sampleId))
+            break;
+    }
+    return sampleId;
+}
 void MP4Parse::readDataThread()
 {
     uint32_t      timeScaleVideo = MP4GetTrackTimeScale(m_pMP4FileHandle, m_trackIdVideo);//视频每秒刻度数; 这个变量用于测试
@@ -261,11 +275,13 @@ void MP4Parse::readDataThread()
 
     MP4Timestamp startStampVideo = MP4ConvertToTrackTimestamp(m_pMP4FileHandle, m_trackIdVideo, m_startTime, MP4_MSECS_TIME_SCALE);
     MP4Timestamp   endStampVideo = MP4ConvertToTrackTimestamp(m_pMP4FileHandle, m_trackIdVideo, m_startTime + m_duration, MP4_MSECS_TIME_SCALE);
-    MP4SampleId    sampleIdVideo = MP4GetSampleIdFromTime(m_pMP4FileHandle, m_trackIdVideo, startStampVideo, false);
+    MP4SampleId    sampleIdVideo = calculateFirstSampleId(m_trackIdVideo, startStampVideo);
+//    MP4SampleId    sampleIdVideo = MP4GetSampleIdFromTime(m_pMP4FileHandle, m_trackIdVideo, startStampVideo, false);
 
     MP4Timestamp startStampAudio = MP4ConvertToTrackTimestamp(m_pMP4FileHandle, m_trackIdAudio, m_startTime, MP4_MSECS_TIME_SCALE);
     MP4Timestamp   endStampAudio = MP4ConvertToTrackTimestamp(m_pMP4FileHandle, m_trackIdAudio, m_startTime + m_duration, MP4_MSECS_TIME_SCALE);
-    MP4SampleId    sampleIdAudio = MP4GetSampleIdFromTime(m_pMP4FileHandle, m_trackIdAudio, startStampAudio, false);
+    MP4SampleId    sampleIdAudio = calculateFirstSampleId(m_trackIdVideo, startStampAudio);
+//    MP4SampleId    sampleIdAudio = MP4GetSampleIdFromTime(m_pMP4FileHandle, m_trackIdAudio, startStampAudio, false);
 
     bool isReadEndVideo = false;
     bool isReadEndAudio = false;
@@ -286,9 +302,15 @@ void MP4Parse::readDataThread()
 
         if (!isReadEndVideo)
         {
+//            uint32_t size = MP4GetSampleSize(m_pMP4FileHandle, m_trackIdVideo, sampleIdVideo);
+//            ppBytes = new uint8_t[size + ];
             if (MP4ReadSample(m_pMP4FileHandle, m_trackIdVideo, sampleIdVideo, &ppBytes, &pNumBytes,
                               &startTime, &duration, &renderingOffset, &isSyncSample))
             {
+                ppBytes[0] = 0x00;
+                ppBytes[1] = 0x00;
+                ppBytes[2] = 0x00;
+                ppBytes[3] = 0x01;
                 m_pIDataReader->read(STREAM_TYPE_VIDEO, ppBytes, pNumBytes, startTime, duration,
                                      renderingOffset, isSyncSample);
                 sampleIdVideo++;
@@ -297,6 +319,8 @@ void MP4Parse::readDataThread()
                     LOGW("read video sample end!!! firstTime:%lu, lastTime:%lu, timeScaleVideo:%u, duration:%lu",
                          startStampVideo, startTime, timeScaleVideo, m_duration);
                     isReadEndVideo = true;
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds((duration*1000)/timeScaleVideo));
                 }
             } else {
                 LOGW("read video sample return false, end read!!!");
@@ -339,7 +363,7 @@ void MP4Parse::readDataThread()
         {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     };
 
     m_pIDataReader->notifyStoped();
@@ -376,7 +400,6 @@ void MP4Parse::stop()
     {
         m_pReadFrameThread->join();
         delete(m_pReadFrameThread);
+        m_pReadFrameThread = nullptr;
     }
-
-    m_pReadFrameThread = nullptr;
 }

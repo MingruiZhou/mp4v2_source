@@ -4,16 +4,17 @@ public class MP4Parse {
     public static final int CREATE_NATIVE_PARSE_FAILED = -1;
     public static final int FILE_HAS_BEEN_OPENED       = -2;
 
-
     private long mNativeMP4Parse;
     private String mFileName;
     private boolean mIsOpened = false;
+    private OnNativeNotify mNotify = null;
 
-    public MP4Parse(String fileName){
+    public MP4Parse(String fileName, OnNativeNotify notify){
         mFileName = fileName;
+        mNotify   = notify;
     }
 
-    public String getmFileName(){
+    public String getFileName(){
         return mFileName;
     }
 
@@ -72,13 +73,11 @@ public class MP4Parse {
 
 
     public void onJNINotifyStopRead(){
-        MGLog.w("文件名：" + mFileName + ", 停止读取数据");
+        mNotify.onJNINotifyStopRead();
     }
 
     public void onJNIReadFrame(int type, byte[] frame, long startTime, long duration, long renderingOffset, boolean isSyncSample){
-        MGLog.i("文件名：" + mFileName + ", frameLength:" + frame.length + ",streamType:" + type + ", startTime:" + startTime + ", duration:" + duration +
-                ", renderingOffset:" + renderingOffset + ", isSyncSample:" + isSyncSample);
-        //TODO：存文件
+        mNotify.onJNIReadFrame(type, frame, startTime, duration, renderingOffset, isSyncSample);
     }
 
     /**
@@ -93,4 +92,9 @@ public class MP4Parse {
      * 停止音视频流的读取
      */
     public native void stop();
+
+    public interface OnNativeNotify {
+        void onJNINotifyStopRead();
+        void onJNIReadFrame(int type, byte[] frame, long startTime, long duration, long renderingOffset, boolean isSyncSample);
+    }
 }

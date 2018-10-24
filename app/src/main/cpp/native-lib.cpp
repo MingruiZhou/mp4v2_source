@@ -11,12 +11,13 @@
 #include <include/mp4v2/mp4v2.h>
 #include "MG_log.h"
 #include "MP4Parse/MP4Parse.h"
-//#include "libmp4v2-android/mp4v2.h"
+//#include <media/NdkMediaCodec.h>
 
 //typedef struct Java_google_mp4v2_github_MP4Parse{
 //    jclass id;
 //    jfieldID mNativeMP4Parse;
 //}Java_google_mp4v2_github_MP4Parse;
+
 
 jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
     jclass jclas = env->GetObjectClass(thiz);
@@ -132,7 +133,7 @@ int get264stream(MP4FileHandle oMp4File,int VTrackId,int totalFrame)
 
     int nReadIndex = 0;
     FILE *pFile = NULL;
-    pFile = fopen("/sdcard/out.h264", "wb");
+    pFile = fopen("/sdcard/out17.h264", "wb");
 
     while(nReadIndex < totalFrame)
     {
@@ -187,7 +188,7 @@ int openmp4file(const char *sMp4file)
     //uint32_t timescale;
     //uint64_t duration;
 
-    if (!oMp4File)
+    if (oMp4File == MP4_INVALID_FILE_HANDLE)
     {
         LOGE("Read error....%s\r\n", sMp4file);
         return -1;
@@ -335,6 +336,10 @@ public:
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_readMethodID,
             type, frameData, startTime, duration, renderingOffset, isSyncSample);
         m_pThreadEnv->DeleteLocalRef(frameData);
+#ifdef DEBUG_SAVE_FILE
+        if (type == STREAM_TYPE_VIDEO)
+            saveToFile(pBytes, numBytes, isSyncSample);
+#endif
     };
 
     //在与JAVA的交互中必须且只能在调用read的线程中使用
@@ -342,6 +347,10 @@ public:
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_notifyMethodID);
         m_JVM->DetachCurrentThread();
         m_isStart = false;
+#ifdef DEBUG_SAVE_FILE
+        fclose(m_pFile);
+        m_pFile = NULL;
+#endif
     };
 
     ~TestParse(){
@@ -352,6 +361,43 @@ public:
         }
         LOGI("======================== destroy TestParse =====================");
     };
+#ifdef DEBUG_SAVE_FILE
+    FILE* m_pFile = NULL;//已经验证OK，不要用APP录制的视频做实验
+    virtual void saveToFile(const uint8_t* pBytes, uint32_t numBytes, uint8_t isKey){
+        if (m_pFile == NULL){
+            m_pFile = fopen("/sdcard/out66.h264", "wb");
+            if (m_pFile == NULL){
+                LOGE("open file failed");
+                return;
+            }
+        }
+
+        if(isKey)
+        {
+            MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(m_pThreadEnv, m_Java_MP4Parse_GlobleRef);
+            const uint8_t *pData = NULL;
+            uint32_t size = pMP4Parse->getSPS(&pData);
+            char NAL[5] = {0x00,0x00,0x00,0x01};
+            fwrite(NAL, 4, 1, m_pFile);
+            fwrite(pData, size, 1, m_pFile);
+
+//            LOGD("SPS:%d %d %d %d %d %d %d %d %d %d %d , size:%u", pData[0], pData[1], pData[2], pData[3], pData[4], pData[5], pData[6], pData[7], pData[8], pData[9], pData[10], size);
+            pData = NULL;
+            size = pMP4Parse->getPPS(&pData);
+            fwrite(NAL, 4, 1, m_pFile);
+            fwrite(pData, size, 1, m_pFile);
+//            LOGD("PPS:%d %d %d %d , size:%u", pData[0], pData[1], pData[2], pData[3], size);
+        }
+        //264frame
+        if(pBytes && numBytes > 4)
+        {
+            //标准的264帧，前面几个字节就是frame的长度.
+            //需要替换为标准的264 nal 头.
+            fwrite(pBytes, numBytes, 1, m_pFile);
+        }
+
+    }
+#endif
 private:
     bool m_isStart = false;
     jobject m_Java_MP4Parse_GlobleRef = NULL;
@@ -400,6 +446,7 @@ Java_google_mp4v2_1github_MP4Parse__1open(
         jstring fileName) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     const char* file = env->GetStringUTFChars(fileName, nullptr);
+//    openmp4file(file);//已经验证OK，不要用APP录制的视频做实验
     if (pMP4Parse)
         return pMP4Parse->openMP4File(file);
 
@@ -516,7 +563,7 @@ Java_google_mp4v2_1github_MP4Parse_start(
         jlong startTime, jlong duration) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     if (pMP4Parse){
-        LOGI("startTime:%u, duration:%u", startTime, duration);
+        LOGI("startTime:%ld, duration:%ld", startTime, duration);
         return pMP4Parse->start(startTime, duration);
     }
 

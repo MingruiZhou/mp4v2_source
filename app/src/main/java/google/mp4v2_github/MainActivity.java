@@ -6,6 +6,7 @@ import android.content.res.Configuration;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,16 +18,34 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("native-lib");
     }
 
-    private LayoutElements [] mLe = new LayoutElements[]{new LayoutElements(), new LayoutElements(), new LayoutElements(), new LayoutElements()};
+    private LayoutElements [] mLe = null;//new LayoutElements[]{new LayoutElements(), new LayoutElements(), new LayoutElements(), new LayoutElements()};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mLe[0].setInfo((TextView) findViewById(R.id.file1), (Button) findViewById(R.id.open1), (Button) findViewById(R.id.read1));
-        mLe[1].setInfo((TextView) findViewById(R.id.file2), (Button) findViewById(R.id.open2), (Button) findViewById(R.id.read2));
-        mLe[2].setInfo((TextView) findViewById(R.id.file3), (Button) findViewById(R.id.open3), (Button) findViewById(R.id.read3));
-        mLe[3].setInfo((TextView) findViewById(R.id.file4), (Button) findViewById(R.id.open4), (Button) findViewById(R.id.read4));
+        mLe = new LayoutElements[]{
+                new LayoutElements(this,
+                        (TextView) findViewById(R.id.file1),
+                        (Button) findViewById(R.id.open1),
+                        (Button) findViewById(R.id.read1),
+                        (SurfaceView) findViewById(R.id.surfaceView1)),
+                new LayoutElements(this,
+                        (TextView) findViewById(R.id.file2),
+                        (Button) findViewById(R.id.open2),
+                        (Button) findViewById(R.id.read2),
+                        (SurfaceView) findViewById(R.id.surfaceView1)),
+                new LayoutElements(this,
+                        (TextView) findViewById(R.id.file3),
+                        (Button) findViewById(R.id.open3),
+                        (Button) findViewById(R.id.read3),
+                        (SurfaceView) findViewById(R.id.surfaceView1)),
+                new LayoutElements(this,
+                        (TextView) findViewById(R.id.file4),
+                        (Button) findViewById(R.id.open4),
+                        (Button) findViewById(R.id.read4),
+                        (SurfaceView) findViewById(R.id.surfaceView1)),
+        };
 
         verifyStoragePermissions(this);
     }
