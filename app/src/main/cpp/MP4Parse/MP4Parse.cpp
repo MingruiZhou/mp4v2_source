@@ -3,8 +3,7 @@
 //
 
 #include "MP4Parse.h"
-//#include "MG_log.h"
-#include "../MG_log.h"
+#include <MG_log.h>
 
 MP4Parse::~MP4Parse()
 {
@@ -249,9 +248,9 @@ MP4PARSE_RETCODE MP4Parse::getMP4Info(stMP4Info* info)
     audioInfo.avgBitRate = MP4GetTrackBitRate(m_pMP4FileHandle, m_trackIdAudio); //单位 bps
     audioInfo.channels   = MP4GetTrackAudioChannels(m_pMP4FileHandle, m_trackIdAudio); //音频声道数
 
-    LOGD("video info => 类型:%s, 每秒刻度数:%u, 总时长:%llu ms, 平均码率:%u bps, 分辨率: %d x %d, 帧率:%f",
+    LOGD("video info => 类型:%s, 每秒刻度数:%u, 总时长:%lu ms, 平均码率:%u bps, 分辨率: %d x %d, 帧率:%f",
          videoInfo.dataName, videoInfo.timeScale, videoInfo.duration, videoInfo.avgBitRate, videoInfo.width, videoInfo.height, videoInfo.fps);
-    LOGD("audio info => 类型:%s, 采样率:%u Hz, 总时长:%llu ms, 平均码率:%u bps, 通道数:%d",
+    LOGD("audio info => 类型:%s, 采样率:%u Hz, 总时长:%lu ms, 平均码率:%u bps, 通道数:%d",
          audioInfo.dataName, audioInfo.timeScale, audioInfo.duration, audioInfo.avgBitRate, audioInfo.channels);
     return SUCCESSED;
 }
@@ -268,6 +267,50 @@ MP4SampleId MP4Parse::calculateFirstSampleId(MP4TrackId trackId, uint32_t timeSc
     }
     return sampleId;
 }
+
+//TODO：功能初步验证通过，代码待优化，细节待优化
+void MP4Parse::addAdts(uint8_t* pBytes, int packetLen)
+{
+    memset(pBytes, 0x0, 7);
+    int profile = MP4GetAudioProfileLevel(m_pMP4FileHandle);  //AAC LC
+    LOGD("profile:%d", profile);
+    profile = 2; //这个profile暂时写死为2，表示AAC LC
+    int freqIdx = 8;  //16KHz
+    int chanCfg = MP4GetTrackAudioChannels(m_pMP4FileHandle, m_trackIdAudio);
+    uint32_t audioTimeScale = MP4GetTrackTimeScale(m_pMP4FileHandle, m_trackIdAudio);//音频每秒刻度数(采样率)
+    switch (audioTimeScale)
+    {
+        case 48000:
+            freqIdx = 0x03;break;
+        case 44100:
+            freqIdx = 0x04;break;
+        case 32000:
+            freqIdx = 0x05;break;
+        case 24000:
+            freqIdx = 0x06;break;
+        case 22050:
+            freqIdx = 0x07;break;
+        case 16000:
+            freqIdx = 0x08;break;
+        case 12000:
+            freqIdx = 0x09;break;
+        case 11025:
+            freqIdx = 0x0a;break;
+        case 8000:
+            freqIdx = 0x0b;break;
+    }
+
+    // fill in ADTS data
+    pBytes[0] = (unsigned char) 0xFF;
+    pBytes[1] = (unsigned char) 0xF9;
+    pBytes[2] = (unsigned char) (((profile - 1) << 6) + (freqIdx << 2) | (chanCfg & 0x04 >> 2));
+    pBytes[3] = (unsigned char) (((chanCfg & 3) << 6) | (packetLen & 0x1800 >> 11));
+    pBytes[4] = (unsigned char) ((packetLen & 0x1FF8) >> 3);
+    pBytes[5] = (unsigned char) (((packetLen & 7) << 5) | 0x1F);
+    pBytes[6] = (unsigned char) 0xFC;
+    pBytes[6] |= ((packetLen - 7) / 1024) & 0x03;
+}
+
 void MP4Parse::readDataThread()
 {
     uint32_t      timeScaleVideo = MP4GetTrackTimeScale(m_pMP4FileHandle, m_trackIdVideo);//视频每秒刻度数; 这个变量用于测试
@@ -311,7 +354,7 @@ void MP4Parse::readDataThread()
                 ppBytes[1] = 0x00;
                 ppBytes[2] = 0x00;
                 ppBytes[3] = 0x01;
-                m_pIDataReader->read(STREAM_TYPE_VIDEO, ppBytes, pNumBytes, startTime, duration,
+                m_pIDataReader->onRead(STREAM_TYPE_VIDEO, ppBytes, pNumBytes, startTime, duration,
                                      renderingOffset, isSyncSample);
                 sampleIdVideo++;
                 if (startTime > endStampVideo && m_duration > 0)//视频数据读取完成
@@ -319,8 +362,8 @@ void MP4Parse::readDataThread()
                     LOGW("read video sample end!!! firstTime:%lu, lastTime:%lu, timeScaleVideo:%u, duration:%lu",
                          startStampVideo, startTime, timeScaleVideo, m_duration);
                     isReadEndVideo = true;
-                } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds((duration*1000)/timeScaleVideo));
+//                } else {
+//                    std::this_thread::sleep_for(std::chrono::milliseconds((duration*1000)/timeScaleVideo));
                 }
             } else {
                 LOGW("read video sample return false, end read!!!");
@@ -339,12 +382,17 @@ void MP4Parse::readDataThread()
             if (MP4ReadSample(m_pMP4FileHandle, m_trackIdAudio, sampleIdAudio, &ppBytes, &pNumBytes,
                               &startTime, &duration, &renderingOffset, &isSyncSample))
             {
-                m_pIDataReader->read(STREAM_TYPE_AUDIO, ppBytes, pNumBytes, startTime, duration,
+                uint8_t * pAudioFrame = new uint8_t[pNumBytes + 7];
+                addAdts(pAudioFrame, pNumBytes + 7);
+                memcpy(&pAudioFrame[7] , ppBytes, pNumBytes);
+                m_pIDataReader->onRead(STREAM_TYPE_AUDIO, pAudioFrame, pNumBytes + 7, startTime, duration,
                                      renderingOffset, isSyncSample);//
+                delete[](pAudioFrame);
+                pAudioFrame = nullptr;
                 sampleIdAudio++;
                 if (startTime > endStampAudio && m_duration > 0)//音频数据读取完成
                 {
-                    LOGW("read video sample end!!! firstTime:%lu, lastTime:%lu, timeScaleAudio:%u, duration:%lu",
+                    LOGW("read audio sample end!!! firstTime:%lu, lastTime:%lu, timeScaleAudio:%u, duration:%lu",
                          startStampAudio, startTime, timeScaleAudio, m_duration);
                     isReadEndVideo = true;
                 }
@@ -366,7 +414,7 @@ void MP4Parse::readDataThread()
 //        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     };
 
-    m_pIDataReader->notifyStoped();
+    m_pIDataReader->onNotifyStoped();
     m_bReading = false;
     LOGW("read thread EXIT, m_bReading:%s, m_pIDataReader:%p <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", m_bReading ? "true" : "false", m_pIDataReader);
 }

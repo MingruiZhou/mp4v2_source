@@ -8,16 +8,8 @@
 #include <dirent.h>
 #include <time.h>
 #include <sys/time.h>
-#include <include/mp4v2/mp4v2.h>
-#include "MG_log.h"
-#include "MP4Parse/MP4Parse.h"
-//#include <media/NdkMediaCodec.h>
-
-//typedef struct Java_google_mp4v2_github_MP4Parse{
-//    jclass id;
-//    jfieldID mNativeMP4Parse;
-//}Java_google_mp4v2_github_MP4Parse;
-
+#include <MG_log.h>
+#include <MP4Parse.h>
 
 jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
     jclass jclas = env->GetObjectClass(thiz);
@@ -92,32 +84,32 @@ void destroy_parse_obj_from_java(JNIEnv *env, jobject thiz){
         env->DeleteLocalRef(jclas);
     }
 }
-
+/*
 unsigned char sps[64],pps[64];
 int spslen = 0,ppslen = 0;
 
 void printInfo(MP4FileHandle hFile, MP4TrackId videoTrackId)
 {
-	MP4Duration Duration      = MP4GetDuration(hFile);
-	uint32_t TimeScale        = MP4GetTimeScale(hFile);
-	uint8_t ODProfileLevel    = MP4GetODProfileLevel(hFile);
-	uint8_t SceneProfileLevel = MP4GetSceneProfileLevel(hFile);
- 	uint8_t VideoProfileLevel = MP4GetVideoProfileLevel(hFile, videoTrackId);
-	uint8_t AudioProfileLevel = MP4GetAudioProfileLevel(hFile);
-	uint8_t GraphicsProfileLevel = MP4GetGraphicsProfileLevel(hFile);
-	uint16_t GetAmrModeSet    = MP4GetAmrModeSet(hFile, videoTrackId);
-	const char *GetHrefTrackBaseUrl = MP4GetHrefTrackBaseUrl (hFile, videoTrackId);
-	LOGI("Duration:%llu, TimeScale:%u, ODProfileLevel:%d, SceneProfileLevel:%d, VideoProfileLevel:%d, "
-		 "AudioProfileLevel:%d, GraphicsProfileLevel:%d, GetAmrModeSet:%d, GetHrefTrackBaseUrl:%s", 
-		 Duration, TimeScale, ODProfileLevel, SceneProfileLevel, VideoProfileLevel, AudioProfileLevel,
-		 GraphicsProfileLevel, GetAmrModeSet, GetHrefTrackBaseUrl == nullptr ? "NULL" : GetHrefTrackBaseUrl);
-	;
-	;
-	;
-	;
-	;
-	;
-	;
+    MP4Duration Duration      = MP4GetDuration(hFile);
+    uint32_t TimeScale        = MP4GetTimeScale(hFile);
+    uint8_t ODProfileLevel    = MP4GetODProfileLevel(hFile);
+    uint8_t SceneProfileLevel = MP4GetSceneProfileLevel(hFile);
+    uint8_t VideoProfileLevel = MP4GetVideoProfileLevel(hFile, videoTrackId);
+    uint8_t AudioProfileLevel = MP4GetAudioProfileLevel(hFile);
+    uint8_t GraphicsProfileLevel = MP4GetGraphicsProfileLevel(hFile);
+    uint16_t GetAmrModeSet    = MP4GetAmrModeSet(hFile, videoTrackId);
+    const char *GetHrefTrackBaseUrl = MP4GetHrefTrackBaseUrl (hFile, videoTrackId);
+    LOGI("Duration:%llu, TimeScale:%u, ODProfileLevel:%d, SceneProfileLevel:%d, VideoProfileLevel:%d, "
+                 "AudioProfileLevel:%d, GraphicsProfileLevel:%d, GetAmrModeSet:%d, GetHrefTrackBaseUrl:%s",
+         Duration, TimeScale, ODProfileLevel, SceneProfileLevel, VideoProfileLevel, AudioProfileLevel,
+         GraphicsProfileLevel, GetAmrModeSet, GetHrefTrackBaseUrl == nullptr ? "NULL" : GetHrefTrackBaseUrl);
+    ;
+    ;
+    ;
+    ;
+    ;
+    ;
+    ;
 }
 
 int get264stream(MP4FileHandle oMp4File,int VTrackId,int totalFrame)
@@ -247,7 +239,7 @@ int openmp4file(const char *sMp4file)
     if(videoindex >= 0)
         get264stream(oMp4File,videoindex,oFrameCount);
 
-	printInfo(oMp4File, videoindex);
+    printInfo(oMp4File, videoindex);
     //需要mp4close 否则在嵌入式设备打开mp4上多了会内存泄露挂掉.
     MP4Close(oMp4File, 0);
     return 0;
@@ -268,9 +260,9 @@ void testOpenFile(const char* fileName)
 
     return ;
 }
-
+*/
 /*********************************      测试MP4Parse用        **********************************/
-#include "MP4Parse/IDataReader.h"
+#include <IDataReader.h>
 class TestParse:public IDataReader{
 public:
     bool initEvn(JNIEnv *pEnv, jobject thiz){
@@ -287,13 +279,13 @@ public:
         return m_JVM != NULL && m_Java_MP4Parse_GlobleRef != NULL;
     }
 
-    virtual void read( STREAM_TYPE type,
-                       const uint8_t* pBytes,
-                       uint32_t numBytes,
-                       MP4Timestamp startTime,
-                       MP4Duration duration,
-                       MP4Duration renderingOffset,
-                       uint8_t isSyncSample){
+    virtual void onRead( STREAM_TYPE type,
+                         const uint8_t* pBytes,
+                         uint32_t numBytes,
+                         MP4Timestamp startTime,
+                         MP4Duration duration,
+                         MP4Duration renderingOffset,
+                         uint8_t isSyncSample){
         if (!m_isStart){
             if (m_JVM == NULL){
                 LOGE("m_JVM is NULL!");
@@ -334,7 +326,7 @@ public:
 //        m_pThreadEnv->NewDirectByteBuffer(pBytes, numBytes);
         m_pThreadEnv->SetByteArrayRegion(frameData, 0, numBytes, (jbyte*)pBytes);
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_readMethodID,
-            type, frameData, startTime, duration, renderingOffset, isSyncSample);
+                                     type, frameData, startTime, duration, renderingOffset, isSyncSample);
         m_pThreadEnv->DeleteLocalRef(frameData);
 #ifdef DEBUG_SAVE_FILE
         if (type == STREAM_TYPE_VIDEO)
@@ -342,8 +334,8 @@ public:
 #endif
     };
 
-    //在与JAVA的交互中必须且只能在调用read的线程中使用
-    virtual void notifyStoped(){
+    //在与JAVA的交互中必须且只能在调用onRead的线程中使用
+    virtual void onNotifyStoped(){
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_notifyMethodID);
         m_JVM->DetachCurrentThread();
         m_isStart = false;
@@ -420,7 +412,7 @@ Java_google_mp4v2_1github_MainActivity_stringFromJNI(
         jobject /* this */) {
     std::string hello = "/sdcard/20181015162811.mp4";
 //    testOpenFile(hello.c_str());
-    openmp4file(hello.c_str());
+//    openmp4file(hello.c_str());
     return env->NewStringUTF(hello.c_str());
 }
 

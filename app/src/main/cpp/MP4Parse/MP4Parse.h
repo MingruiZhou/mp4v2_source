@@ -7,7 +7,7 @@
 #define MP4V2_SOURCE_MP4PARSE_H
 
 
-#include <include/mp4v2/mp4v2.h>
+#include <mp4v2.h>
 #include <string>
 #include <thread>
 
@@ -37,31 +37,22 @@ typedef struct MP4V2_VIDEO_INFO {
     uint32_t avgBitRate;  //平均码率，单位 bps
     uint16_t width;  //视频宽
     uint16_t height; //视频高
-    double  fps;    //视频帧率
-}stVideoInfo;
+    double fps;    //视频帧率
+} stVideoInfo;
 
 typedef struct MP4V2_AUDIO_INFO {
     char dataName[64];  //TODO:待确定名字与音频编码类型的关系
     uint32_t timeScale; //音频采样率，单位Hz
     uint64_t duration; //总时长，单位ms
     uint32_t avgBitRate; //平均码率，单位 bps
-    int      channels;//通道数
-}stAudioInfo;
+    int channels;//通道数
+} stAudioInfo;
 
 //TODO:具体内容待商议
 typedef struct MP4V2_MP4INFO {
     stVideoInfo videoInfo;
     stAudioInfo audioInfo;
 } stMP4Info;
-
-//TODO:具体参数待确认
-typedef void (*pReadCallBackFuntion) (const uint8_t* pBytes,
-                                        uint32_t numBytes,
-                                        MP4Timestamp startTime,
-                                        MP4Duration duration,
-                                        MP4Duration renderingOffset,
-                                        uint8_t isSyncSample);
-
 }
 
 class HeaderData{
@@ -98,7 +89,7 @@ private:
     MP4PARSE_RETCODE parseAudioHeader();
     void readDataThread();
     MP4SampleId calculateFirstSampleId(MP4TrackId trackId, uint32_t timeScale);
-
+    void addAdts(uint8_t* pBytes, int packetLen);
 public:
     MP4Parse(IDataReader* pDataReader){m_pIDataReader = pDataReader;};
     ~MP4Parse();
@@ -145,6 +136,5 @@ private:
     std::thread*  m_pReadFrameThread = nullptr;
     std::mutex    m_ReadFrameThreadmutex;
 };
-
 
 #endif //MP4V2_SOURCE_MP4PARSE_H

@@ -16,8 +16,10 @@ message("-------------- ${CMAKE_CURRENT_SOURCE_DIR} ---------------")
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libyuv-android)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android/include
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android/include/mp4v2
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/MP4Parse)
 
 add_library( # Sets the name of the library.
@@ -49,7 +51,6 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                        native-lib
-
                        yuv
                        mp4v2
                        # Links the target library to the log library
