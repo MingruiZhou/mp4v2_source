@@ -1,10 +1,12 @@
-package google.mp4v2_github;
+package google.github;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +14,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import google.mp4v2_github.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -117,10 +121,13 @@ public class MainActivity extends AppCompatActivity {
     //intent.setType(“video/*”); //选择视频 （mp4 3gp 是android支持的视频格式）
     //intent.setType(“video/*;image/*”);//同时选择视频和图片
     private void open(int requestCode){
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("video/.mp4");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(intent,requestCode);
+//        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//        intent.setType("video/.mp4");
+//        intent.addCategory(Intent.CATEGORY_OPENABLE);
+//        startActivityForResult(intent,requestCode);
+
+        Intent i = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(i, requestCode);
     }
 
     public void onClickOpen1(View v){
@@ -150,6 +157,8 @@ public class MainActivity extends AppCompatActivity {
             open(2);
         }
     }
+
+    private Mp4TimeLapseMuxer mMp4TimeLapseMuxer = new Mp4TimeLapseMuxer();
     public void onClickRead3(View v){
         mLe[2].read();
     }
@@ -166,10 +175,26 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
+
             if (requestCode >= 0 && requestCode < 4) {
                 Uri uri = data.getData();
-                mLe[requestCode].open(uri);
+
 //                Toast.makeText(this, "文件路径："+uri.getPath().toString(), Toast.LENGTH_SHORT).show();
+                String[] filePathColumn = { MediaStore.Video.Media.DATA };
+
+                Cursor cursor = getContentResolver().query(uri ,
+                        filePathColumn, null, null, null);
+                cursor.moveToFirst();
+
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String videoPath = cursor.getString(columnIndex);
+                if (requestCode == 3){
+                    if (mMp4TimeLapseMuxer.openSrcFile(videoPath) == 0) {
+                        mMp4TimeLapseMuxer.start("sdcard/testMuxer.mp4", 1 * mMp4TimeLapseMuxer.getVideoGOP());//一定要是GOP的帧数倍
+                    }
+                } else
+                    mLe[requestCode].open(videoPath);
+                cursor.close();
             }
         }
     }

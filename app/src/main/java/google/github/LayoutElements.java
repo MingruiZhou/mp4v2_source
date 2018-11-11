@@ -1,15 +1,13 @@
-package google.mp4v2_github;
+package google.github;
 
 import android.app.Activity;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.net.Uri;
 import android.view.SurfaceView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -55,7 +53,7 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
     public boolean isOpened(){
         return mParse != null;
     }
-    public int open(Uri file){
+    public int open(String file){
         if (mParse != null){
             mParse.closeMP4File();
             mParse = null;
@@ -72,8 +70,7 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
         }
 
 //        mFileName = mTv.getText().toString();
-        mTv.setText(mFileName);
-        mFileName = file.getPath();
+        mFileName = file;
         mTv.setText(mFileName);
         mParse = new MP4Parse(mFileName, this);
         int ret = mParse.openMP4File();
@@ -116,8 +113,8 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
 
     // Video Constants
     private final static String MIME_TYPE = "video/avc"; // H.264 Advanced Video
-    private final static int VIDEO_WIDTH = 1920;
-    private final static int VIDEO_HEIGHT = 1088;
+    private final static int VIDEO_WIDTH = 1280;
+    private final static int VIDEO_HEIGHT = 720;
     private final static int TIME_INTERNAL = 30;
     private final static int TIMEOUT_US = 1000;
 
@@ -209,6 +206,15 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
         if (mSurfaceView == null){
             return;
         }
+
+//        try {
+//            Thread.sleep(duration);
+//        } catch (InterruptedException e) {
+//            MGLog.e("Thread.sleep erro");
+//            e.printStackTrace();
+//        }
+
+
         int inputBufferIndex = mMediaCodec.dequeueInputBuffer(TIMEOUT_US);
         if (inputBufferIndex >= 0) {
             ByteBuffer buffer = mMediaCodec.getInputBuffer(inputBufferIndex);
@@ -219,6 +225,7 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
                 mMediaCodec.queueInputBuffer(inputBufferIndex, 0, frame.length, duration, 0);
             }catch (MediaCodec.CryptoException e){
                 MGLog.e("queueInputBuffer erro");
+                e.printStackTrace();
             }
 
         } else {
@@ -267,7 +274,7 @@ public class LayoutElements implements MP4Parse.OnNativeNotify{
             try{
                 if (mSaveAudioFile == null) {
                     mSaveAudioFile = new FileOutputStream(mAudioFileName);
-                    mSaveAudioFile.write(mParse.getAES());
+//                    mSaveAudioFile.write(mParse.getAES());
                 }
 //                mSaveAudioFile.write(mParse.getAES());
                 mSaveAudioFile.write(frame);

@@ -1,10 +1,10 @@
-package google.mp4v2_github;
+package google.github;
 
 public class MP4Parse {
     public static final int CREATE_NATIVE_PARSE_FAILED = -1;
     public static final int FILE_HAS_BEEN_OPENED       = -2;
 
-    private long mNativeMP4Parse;
+    private long mNativeObj;
     private String mFileName;
     private boolean mIsOpened = false;
     private OnNativeNotify mNotify = null;
@@ -23,9 +23,9 @@ public class MP4Parse {
             return FILE_HAS_BEEN_OPENED;
         }
 
-        if (mNativeMP4Parse <= 0){
-            mNativeMP4Parse = _create();  //_create不放构造函数里
-            if (mNativeMP4Parse <= 0){//创建底层对象失败了就返回错误码
+        if (mNativeObj <= 0){
+            mNativeObj = _create();  //_create不放构造函数里
+            if (mNativeObj <= 0){//创建底层对象失败了就返回错误码
                 return CREATE_NATIVE_PARSE_FAILED;
             }
         }
@@ -40,7 +40,7 @@ public class MP4Parse {
     }
 
     public void closeMP4File(){
-        if (mNativeMP4Parse != 0){
+        if (mNativeObj != 0){
             _destroy();
         }
     }
@@ -97,4 +97,10 @@ public class MP4Parse {
         void onJNINotifyStopRead();
         void onJNIReadFrame(int type, byte[] frame, long startTime, long duration, long renderingOffset, boolean isSyncSample);
     }
+
+    /**
+     * 获取视频的GOP值
+     * @return 0：获取失败或者可能视频流有问题；其他值:正确的GOP值
+     */
+    public native int getVideoGOP();
 }

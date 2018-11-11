@@ -14,7 +14,7 @@ enum STREAM_TYPE:int{
 };
 class IDataReader{
 public:
-    virtual void onRead( STREAM_TYPE type,
+    virtual void onRead(STREAM_TYPE type,
                         const uint8_t* pBytes,
                         uint32_t numBytes,
                         MP4Timestamp startTime,
@@ -22,7 +22,7 @@ public:
                         MP4Duration renderingOffset,
                         uint8_t isSyncSample) = 0;
 
-    virtual void onNotifyStoped() = 0;//通知线程已经停止
+    virtual void onNotifyStoped(uint32_t retCode) = 0;//通知线程已经停止
     virtual ~IDataReader(){LOGI("---------------- destroy IDataReader ---------------");};
 };
 

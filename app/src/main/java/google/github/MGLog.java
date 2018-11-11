@@ -1,4 +1,4 @@
-package google.mp4v2_github;
+package google.github;
 
 
 import android.util.Log;

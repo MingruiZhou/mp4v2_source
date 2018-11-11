@@ -26,7 +26,7 @@ jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
             break;
         }
 
-        jfieldID fieldId = env->GetFieldID(jclas, "mNativeMP4Parse", "J");
+        jfieldID fieldId = env->GetFieldID(jclas, "mNativeObj", "J");
         if (env->ExceptionCheck()) {
             env->ExceptionDescribe();
             env->ExceptionClear();
@@ -43,7 +43,7 @@ jlong get_parse_obj_from_java(JNIEnv *env, jobject thiz){
         return env->GetLongField(thiz, fieldId);
     }while(0);
 
-    if (jclas == nullptr){
+    if (jclas != nullptr){
         env->DeleteLocalRef(jclas);
     }
     return 0;
@@ -64,7 +64,7 @@ void destroy_parse_obj_from_java(JNIEnv *env, jobject thiz){
             break;
         }
 
-        jfieldID fieldId = env->GetFieldID(jclas, "mNativeMP4Parse", "J");
+        jfieldID fieldId = env->GetFieldID(jclas, "mNativeObj", "J");
         if (env->ExceptionCheck()) {
             env->ExceptionDescribe();
             env->ExceptionClear();
@@ -80,7 +80,43 @@ void destroy_parse_obj_from_java(JNIEnv *env, jobject thiz){
         env->SetLongField(thiz, fieldId, 0);
     }while(0);
 
-    if (jclas == nullptr){
+    if (jclas != nullptr){
+        env->DeleteLocalRef(jclas);
+    }
+}
+
+void set_parse_obj_to_java(JNIEnv *env, jobject thiz, jlong obj){
+    jclass jclas = env->GetObjectClass(thiz);
+    do {
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            LOGE("call GetObjectClass failed, ExceptionCheck return true!");
+            break;
+        }
+
+        if (nullptr == jclas) {
+            LOGE("call GetObjectClass failed, retval is NULL");
+            break;
+        }
+
+        jfieldID fieldId = env->GetFieldID(jclas, "mNativeObj", "J");
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            LOGE("call GetFieldID failed, ExceptionCheck return true!");
+            break;
+        }
+
+        if (nullptr == fieldId) {
+            LOGE("call GetFieldID failed, retval is NULL");
+            break;
+        }
+
+        env->SetLongField(thiz, fieldId, obj);
+    }while(0);
+
+    if (jclas != nullptr){
         env->DeleteLocalRef(jclas);
     }
 }
@@ -244,7 +280,7 @@ int openmp4file(const char *sMp4file)
     MP4Close(oMp4File, 0);
     return 0;
 }
-
+*/
 void testOpenFile(const char* fileName)
 {
     FILE* pTestFile = fopen(fileName, "wb");
@@ -260,9 +296,11 @@ void testOpenFile(const char* fileName)
 
     return ;
 }
-*/
+
 /*********************************      测试MP4Parse用        **********************************/
 #include <IDataReader.h>
+#include <MP4Parse/Mp4TimeLapseMuxer.h>
+
 class TestParse:public IDataReader{
 public:
     bool initEvn(JNIEnv *pEnv, jobject thiz){
@@ -335,7 +373,7 @@ public:
     };
 
     //在与JAVA的交互中必须且只能在调用onRead的线程中使用
-    virtual void onNotifyStoped(){
+    virtual void onNotifyStoped(uint32_t retCode){
         m_pThreadEnv->CallVoidMethod(m_Java_MP4Parse_GlobleRef, m_notifyMethodID);
         m_JVM->DetachCurrentThread();
         m_isStart = false;
@@ -407,7 +445,7 @@ enum NATIVE_RETCODE:int{
 
 extern "C" JNIEXPORT jstring
 JNICALL
-Java_google_mp4v2_1github_MainActivity_stringFromJNI(
+Java_google_github_MainActivity_stringFromJNI(
         JNIEnv *env,
         jobject /* this */) {
     std::string hello = "/sdcard/20181015162811.mp4";
@@ -418,7 +456,7 @@ Java_google_mp4v2_1github_MainActivity_stringFromJNI(
 
 extern "C" JNIEXPORT jlong
 JNICALL
-Java_google_mp4v2_1github_MP4Parse__1create(
+Java_google_github_MP4Parse__1create(
         JNIEnv *env,
         jobject thiz) {
     TestParse* TP = new TestParse();
@@ -433,12 +471,13 @@ Java_google_mp4v2_1github_MP4Parse__1create(
 
 extern "C" JNIEXPORT jint
 JNICALL
-Java_google_mp4v2_1github_MP4Parse__1open(
+Java_google_github_MP4Parse__1open(
         JNIEnv *env, jobject thiz,
         jstring fileName) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     const char* file = env->GetStringUTFChars(fileName, nullptr);
 //    openmp4file(file);//已经验证OK，不要用APP录制的视频做实验
+//    testOpenFile(file);
     if (pMP4Parse)
         return pMP4Parse->openMP4File(file);
 
@@ -447,7 +486,7 @@ Java_google_mp4v2_1github_MP4Parse__1open(
 
 extern "C" JNIEXPORT void
 JNICALL
-Java_google_mp4v2_1github_MP4Parse__1destroy(
+Java_google_github_MP4Parse__1destroy(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -466,7 +505,7 @@ Java_google_mp4v2_1github_MP4Parse__1destroy(
 
 extern "C" JNIEXPORT jbyteArray
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_getSPS(
+Java_google_github_MP4Parse_getSPS(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -489,7 +528,7 @@ Java_google_mp4v2_1github_MP4Parse_getSPS(
 
 extern "C" JNIEXPORT jbyteArray
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_getPPS(
+Java_google_github_MP4Parse_getPPS(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -512,7 +551,7 @@ Java_google_mp4v2_1github_MP4Parse_getPPS(
 
 extern "C" JNIEXPORT jbyteArray
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_getAES(
+Java_google_github_MP4Parse_getAES(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -535,7 +574,7 @@ Java_google_mp4v2_1github_MP4Parse_getAES(
 
 extern "C" JNIEXPORT jint
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_getMP4Info(
+Java_google_github_MP4Parse_getMP4Info(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -549,14 +588,14 @@ Java_google_mp4v2_1github_MP4Parse_getMP4Info(
 
 extern "C" JNIEXPORT jint
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_start(
+Java_google_github_MP4Parse_start(
         JNIEnv *env,
         jobject thiz,
         jlong startTime, jlong duration) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
     if (pMP4Parse){
         LOGI("startTime:%ld, duration:%ld", startTime, duration);
-        return pMP4Parse->start(startTime, duration);
+        return pMP4Parse->startTruncateRead(startTime, duration);
     }
 
     return NATIVE_ENV_ERROR;
@@ -564,7 +603,7 @@ Java_google_mp4v2_1github_MP4Parse_start(
 
 extern "C" JNIEXPORT void
 JNICALL
-Java_google_mp4v2_1github_MP4Parse_stop(
+Java_google_github_MP4Parse_stop(
         JNIEnv *env,
         jobject thiz) {
     MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
@@ -573,3 +612,118 @@ Java_google_mp4v2_1github_MP4Parse_stop(
     }
 }
 
+extern "C" JNIEXPORT jint
+JNICALL
+Java_google_github_MP4Parse_getVideoGOP(
+        JNIEnv *env,
+        jobject thiz) {
+    MP4Parse* pMP4Parse = (MP4Parse*)get_parse_obj_from_java(env, thiz);
+    if (pMP4Parse){
+        return pMP4Parse->getGOP();
+    }
+
+    return 0;
+}
+
+class TestMuxer:public IMuxerNotification{
+    virtual void onStop(uint32_t retCode){
+        LOGW("已经停止转录。。。。");
+    }
+};
+
+extern "C" JNIEXPORT jlong
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_create(
+        JNIEnv *env,
+        jobject thiz) {
+    TestMuxer* TM = new TestMuxer();
+    if (TM != nullptr){
+        return (jlong) (new Mp4TimeLapseMuxer(TM));
+    }
+
+    return 0L;
+}
+
+extern "C" JNIEXPORT void
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_destroy(
+        JNIEnv *env,
+        jobject thiz) {
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        destroy_parse_obj_from_java(env, thiz);
+        pMp4TimeLapseMuxer->stop();
+        TestMuxer* TM = dynamic_cast<TestMuxer*>(pMp4TimeLapseMuxer->getNotification());
+        delete(pMp4TimeLapseMuxer);
+        delete(TM);
+    }
+}
+
+
+extern "C" JNIEXPORT jint
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_openSourceFile(
+        JNIEnv *env,
+        jobject thiz,
+        jstring srcFile) {
+    jboolean iscopy = false;
+    const char* pSrcFile = env->GetStringUTFChars(srcFile, &iscopy);
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        return pMp4TimeLapseMuxer->openSourceFile(pSrcFile);
+    }
+
+    return -1;
+}
+
+extern "C" JNIEXPORT void
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_closeSourceFile(
+        JNIEnv *env,
+        jobject thiz) {
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        pMp4TimeLapseMuxer->closeSourceFile();
+    }
+}
+
+extern "C" JNIEXPORT jint
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_start(
+        JNIEnv *env,
+        jobject thiz,
+        jstring desFile, jint speed) {
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        jboolean iscopy = false;
+
+        const char* pDesFile = env->GetStringUTFChars(desFile, &iscopy);
+        return pMp4TimeLapseMuxer->start(pDesFile, speed);
+    }
+
+    return -1;
+}
+
+extern "C" JNIEXPORT void
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_stop(
+        JNIEnv *env,
+        jobject thiz) {
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        pMp4TimeLapseMuxer->stop();
+    }
+}
+
+extern "C" JNIEXPORT jint
+JNICALL
+Java_google_github_Mp4TimeLapseMuxer_getVideoGOP(
+        JNIEnv *env,
+        jobject thiz) {
+    Mp4TimeLapseMuxer* pMp4TimeLapseMuxer = (Mp4TimeLapseMuxer*)get_parse_obj_from_java(env, thiz);
+    if (pMp4TimeLapseMuxer){
+        return pMp4TimeLapseMuxer->getGOP();
+    }
+
+    return 0;
+}
