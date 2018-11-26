@@ -43,7 +43,7 @@ int Mp4TimeLapseMuxer::initWriteDestinationFile(const char* desFile)
     stPPS.count = ppsLen;
     memcpy(stPPS.data, pps, ppsLen);
 
-    if (framerate <= 1.000000)
+    if (framerate < 1.000000)
         framerate = DEFAULT_FRAMERATE;
     if (!m_pMp4Muxer->SetupVideoTrack(stSPS, stPPS, framerate))
     {
@@ -53,9 +53,18 @@ int Mp4TimeLapseMuxer::initWriteDestinationFile(const char* desFile)
     return 0;
 }
 
+void LogCallback(MP4LogLevel loglevel, const char* fmt, va_list ap)
+{
+    char str[256] = {0};
+    vsprintf(str, fmt, ap);
+    LOGW("%d:%s", loglevel, str);
+}
+
 int Mp4TimeLapseMuxer::openSourceFile(const char* srcFile)
 {
     std::lock_guard<std::mutex> lock(m_mutexLock);
+    MP4LogSetLevel(MP4_LOG_VERBOSE4);
+    MP4SetLogCallback(LogCallback);
     if (m_pMP4Parse == nullptr)
         m_pMP4Parse = new MP4Parse(this);
 

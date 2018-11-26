@@ -37,7 +37,9 @@ aux_source_directory( libutil ly_source_files)
 #LIST ( SORT    ly_source_files )
 
 #排序之后的文件
-message("-----------------The following is the sorted source file = ${ly_source_files}--------------------")
+message("-----------------The following is the sorted source file--------------------")
+message("${ly_source_files}")
+
 foreach(_var ${ly_source_files})
    message("${_var}")
    if(_var MATCHES "_win32.cpp")
@@ -51,10 +53,9 @@ foreach(_var ${filter_source_cpp})
     list(REMOVE_ITEM ly_source_files ${_var})
 endforeach()
 
-message("---------------------------------------------------------------------------")
+message("----------------   file sorted END and delete win32 file END   -----------------------")
 
 if (${ANDROID_ABI} STREQUAL "armeabi-v7a")
-    message("------------------------${ly_lib_name}::armeabi-v7a-----------------------------")
 set_property(SOURCE ${ly_source_files} APPEND_STRING PROPERTY COMPILE_FLAGS " -mfpu=neon")
 endif ()
 
@@ -87,3 +88,4 @@ target_link_libraries(${ly_lib_name}
 
 #动态库版本号
 ##set_target_properties ( ${ly_lib_name} properties VERSION 1.0 SOVERSION 1)
+message("-------------------buile ${ly_lib_name} END  -------------------")

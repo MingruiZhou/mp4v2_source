@@ -298,8 +298,6 @@ void MP4Parse::addAdts(uint8_t* pBytes, int packetLen)
 {
     memset(pBytes, 0x0, 7);
     int profile = MP4GetAudioProfileLevel(m_pMP4FileHandle);  //AAC LC
-//    LOGD("profile:%d", profile);
-    profile = 2; //这个profile暂时写死为2，表示AAC LC
     int freqIdx = 8;  //16KHz
     int chanCfg = MP4GetTrackAudioChannels(m_pMP4FileHandle, m_trackIdAudio);
     uint32_t audioTimeScale = MP4GetTrackTimeScale(m_pMP4FileHandle, m_trackIdAudio);//音频每秒刻度数(采样率)
@@ -327,13 +325,16 @@ void MP4Parse::addAdts(uint8_t* pBytes, int packetLen)
 
     // fill in ADTS data
     pBytes[0] = (unsigned char) 0xFF;
-    pBytes[1] = (unsigned char) 0xF9;
+    if (MP4_MPEG4_AUDIO_TYPE != MP4GetTrackEsdsObjectTypeId(m_pMP4FileHandle,m_trackIdAudio ))
+        pBytes[1] = (unsigned char) 0xF9;
+    else
+        pBytes[1] = (unsigned char) 0xF1; //MPEG-4
+
     pBytes[2] = (unsigned char) (((profile - 1) << 6) + (freqIdx << 2) | (chanCfg & 0x04 >> 2));
     pBytes[3] = (unsigned char) (((chanCfg & 3) << 6) | (packetLen & 0x1800 >> 11));
     pBytes[4] = (unsigned char) ((packetLen & 0x1FF8) >> 3);
     pBytes[5] = (unsigned char) (((packetLen & 7) << 5) | 0x1F);
     pBytes[6] = (unsigned char) 0xFC;
-    pBytes[6] |= ((packetLen - 7) / 1024) & 0x03;
 }
 
 void MP4Parse::truncateReadThread()
@@ -354,7 +355,7 @@ void MP4Parse::truncateReadThread()
     bool isReadEndVideo = false;
     bool isReadEndAudio = false;
 
-    LOGW("read thread start, Reading:%d, IDataReader:%p, m_startTime:%lu, m_duration:%lu",
+    LOGW("read thread start, Reading:%u, IDataReader:%p, m_startTime:%lu, m_duration:%lu",
          m_bReadingStatus , m_pIDataReader, m_startTime, m_duration);
     LOGI("sampleIdVideo:%u, timeScaleVideo:%u, startStampVideo:%lu", sampleIdVideo, timeScaleVideo, startStampVideo);
     LOGI("sampleIdAudio:%u, timeScaleAudio:%u, startStampAudio:%lu", sampleIdAudio, timeScaleAudio, startStampAudio);

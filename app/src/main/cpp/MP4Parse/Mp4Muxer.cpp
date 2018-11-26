@@ -171,7 +171,8 @@ bool Mp4Muxer::SetupVideoTrack(ps_t& sps, ps_t& pps, double frameRate) {
         if (framerate <= 0){
             framerate = (int)(frameRate + 0.5);
         }
-        LOGI("width:%d, heigth:%d, framerate:%d, dFrameRate:%f", width, height, framerate, frameRate);
+        LOGI("TICKS:%lu, width:%d, heigth:%d, framerate:%d, dFrameRate:%f", TICKS, width, height, framerate, frameRate);
+        LOGD("SPS.data[1]:%u, SPS.data[2]:%u, SPS.data[3]:%u", sps.data[1], sps.data[2], sps.data[3]);
         mVideoTrackId = MP4AddH264VideoTrack(mMp4FileHandle, TICKS, TICKS / framerate, width,
                                              height,
                                              sps.data[1], //sps[1] AVCProfileIndication
