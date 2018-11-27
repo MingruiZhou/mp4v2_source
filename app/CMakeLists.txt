@@ -17,6 +17,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libyuv-android)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android)
 #暂时不添加oRTP的库，因为使用的oRTP源码依赖的其它库
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libortp-android)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/liblive555-android)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp
                     ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/libmp4v2-android
