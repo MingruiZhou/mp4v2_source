@@ -23,6 +23,7 @@ aux_source_directory( ${CMAKE_CURRENT_SOURCE_DIR}/UsageEnvironment      source_f
 aux_source_directory( ${CMAKE_CURRENT_SOURCE_DIR}/BasicUsageEnvironment source_file )
 aux_source_directory( ${CMAKE_CURRENT_SOURCE_DIR}/groupsock             source_file )
 aux_source_directory( ${CMAKE_CURRENT_SOURCE_DIR}/liveMedia             source_file )
+#aux_source_directory( ${CMAKE_CURRENT_SOURCE_DIR}/testProgs             source_file )
 
 include_directories( BEFORE ${inc_file} )
 
@@ -36,5 +37,21 @@ ADD_LIBRARY (   ${lib_name}
                 SHARED
 
                 ${source_file}
-                 mediaServer/DynamicRTSPServer.cpp)
+                 mediaServer/DynamicRTSPServer.cpp
+                 mediaServer/serverTest.cpp
+                 testProgs/testRTSPClient.cpp)
+
+find_library( # Sets the name of the path variable.
+              log-lib
+
+              # Specifies the name of the NDK library that
+              # you want CMake to locate.
+              log )
+
+target_link_libraries( # Specifies the target library.
+                       ${lib_name}
+
+                       # Links the target library to the log library
+                       # included in the NDK.
+                       ${log-lib} )
 message("------------------------------Cmake build ${lib_name} END-----------------------------")

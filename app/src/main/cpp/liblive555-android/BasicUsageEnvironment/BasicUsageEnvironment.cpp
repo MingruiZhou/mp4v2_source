@@ -18,6 +18,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 // Implementation
 
 #include "BasicUsageEnvironment.hh"
+#include "../../MG_log.h"
 #include <stdio.h>
 
 ////////// BasicUsageEnvironment //////////
@@ -55,26 +56,26 @@ int BasicUsageEnvironment::getErrno() const {
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(char const* str) {
   if (str == NULL) str = "(NULL)"; // sanity check
-  fprintf(stderr, "%s", str);
+  LOGI("%s", str);
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(int i) {
-  fprintf(stderr, "%d", i);
+  LOGD("%d", i);
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(unsigned u) {
-  fprintf(stderr, "%u", u);
+  LOGD("%u", u);
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(double d) {
-  fprintf(stderr, "%f", d);
+  LOGD("%f", d);
   return *this;
 }
 
 UsageEnvironment& BasicUsageEnvironment::operator<<(void* p) {
-  fprintf(stderr, "%p", p);
+  LOGD("%p", p);
   return *this;
 }
